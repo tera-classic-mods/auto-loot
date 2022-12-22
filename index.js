@@ -2,17 +2,17 @@
 const config = require('./config.js');
 
 module.exports = function AutoLootOld(mod) {
-    const cmd = mod.command || mod.require.command;
+	const cmd = mod.command || mod.require.command;
 
-    let enable = config.enable,
-        enableAuto = config.enableAuto,
-        interval = config.interval,
-        throttleMax = config.throttleMax,
-        scanInterval = config.scanInterval,
-        radius = config.radius;
+	let enable = config.enable,
+		enableAuto = config.enableAuto,
+		interval = config.interval,
+		throttleMax = config.throttleMax,
+		scanInterval = config.scanInterval,
+		radius = config.radius;
 
-    let location = null,
-        items = new Map(),
+	let location = null,
+		items = new Map(),
 		lootTimeout = null;
 
 	cmd.add('loot', {
@@ -26,22 +26,25 @@ module.exports = function AutoLootOld(mod) {
 		}
 	});
 
-    mod.game.me.on('change_zone', () => { items.clear(); });
+	mod.game.me.on('change_zone', () => { items.clear(); });
 	
 	mod.hook('S_RETURN_TO_LOBBY', 1, () => { items.clear(); });
-    mod.hook('C_PLAYER_LOCATION', 5, (e) => { location = e.loc; });
-    mod.hook('S_SYSTEM_MESSAGE', 1, (e) => { if (e.message === '@41') return false });
-    mod.hook('C_TRY_LOOT_DROPITEM', 4, () => { if(enable && !lootTimeout) lootTimeout = setTimeout(tryLoot, interval); });
-    mod.hook('S_DESPAWN_DROPITEM', 4, (e) => { items.delete(e.gameId); });
+	mod.hook('C_PLAYER_LOCATION', 5, (e) => { location = e.loc; });
+	mod.hook('S_SYSTEM_MESSAGE', 1, (e) => { if (e.message === '@41') return false });
+	mod.hook('C_TRY_LOOT_DROPITEM', 4, () => { if(enable && !lootTimeout) lootTimeout = setTimeout(tryLoot, interval); });
+	mod.hook('S_DESPAWN_DROPITEM', 4, (e) => { items.delete(e.gameId); });
 
-    mod.hook('S_SPAWN_DROPITEM', 6, (e) => {
-        if(!(config.blacklist.includes(e.item)) && (e.item < 8000 || e.item > 8024) && e.owners.some(owner => owner.playerId === mod.game.me.playerId)){
+	mod.hook('S_SPAWN_DROPITEM', 6, (e) => {
+		if(!config.blacklist.includes(e.item) &&
+			config.blacklist.filter(r => Array.isArray(r) && (e.item >= r[0] && e.item <= r[1])).length === 0 &&
+			e.owners.some(owner => owner.playerId === mod.game.me.playerId)
+		) {
 			items.set(e.gameId, Object.assign(e, {priority: 0}));
 			if(enableAuto && !lootTimeout) tryLoot();
-        }
-    });
+		}
+	});
 
-    function tryLoot() {
+	function tryLoot() {
 		clearTimeout(lootTimeout);
 		lootTimeout = null;
 		if(!items.size || mod.game.me.mounted) return;
@@ -53,5 +56,5 @@ module.exports = function AutoLootOld(mod) {
 			}
 		}
 		if(enableAuto) setTimeout(tryLoot, scanInterval);
-    }
+	}
 }
