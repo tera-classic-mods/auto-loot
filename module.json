@@ -1,0 +1,9 @@
+{
+    "disableAutoUpdate": false,
+    "servers": ["https://git.teramods.ml/tera-classic-mods/auto-loot/raw/master/"],
+    "options": {
+        "niceName": "Auto Loot"
+    },
+    "name": "auto-loot",
+    "description": "Auto loot module."
+}
